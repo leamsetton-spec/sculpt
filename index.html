@@ -1,0 +1,582 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Sculpt</title><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Sculpt"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="theme-color" content="#FBF5F6"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="apple-touch-icon.png"><link rel="manifest" href="manifest.json"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@500&display=swap">
+<style>
+/* Layout: training-card stack — today's workout on top like a coach's message, 12-week grid below, rules last. */
+:root{
+  --bg:#FBF5F6; --surface:#FFFFFF; --ink:#2A1620; --muted:#77626C; --line:#ECDDE2; --soft:#F6E9ED;
+  --accent:#C93A6D; --accent-ink:#FFFFFF;
+  --lower:#C93A6D; --upper:#3E62C9; --full:#D86A1E; --core:#2E8A5F; --active:#9A8790;
+  --good:#2E8A5F; --warn:#C0392B;
+  --f-display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --f-body:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"DM Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#171014; --surface:#21171C; --ink:#F6EAEF; --muted:#B39DA8; --line:#3A2A32; --soft:#2B1E25;
+  --accent:#F06A9A; --accent-ink:#1A0E13;
+  --lower:#F06A9A; --upper:#7F9BF2; --full:#F2994A; --core:#5CC795; --active:#8E7B84;
+  --good:#5CC795; --warn:#FF7A6B; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171014; --surface:#21171C; --ink:#F6EAEF; --muted:#B39DA8; --line:#3A2A32; --soft:#2B1E25;
+  --accent:#F06A9A; --accent-ink:#1A0E13;
+  --lower:#F06A9A; --upper:#7F9BF2; --full:#F2994A; --core:#5CC795; --active:#8E7B84;
+  --good:#5CC795; --warn:#FF7A6B; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px;display:grid;gap:28px}
+h1,h2,h3{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.01em;line-height:.95;margin:0;text-wrap:balance}
+h1{font-size:clamp(44px,8vw,76px);font-weight:800}
+h2{font-size:30px;font-weight:800}
+h3{font-size:22px;font-weight:700}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+a{color:var(--accent)}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header{display:grid;gap:14px}
+.hdr-row{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:flex-end;justify-content:space-between}
+.lede{max-width:60ch;color:var(--muted);margin:0}
+.stats{display:flex;gap:22px;flex-wrap:wrap}
+.stat b{display:block;font-family:var(--f-display);font-size:36px;line-height:1}
+.stat span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.phasebar{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.phasebar div{border-top:4px solid var(--line);padding-top:6px;font-size:12px;color:var(--muted)}
+.phasebar div.on{border-color:var(--accent);color:var(--ink);font-weight:700}
+.toggles{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.switch{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px 6px 8px;font-size:13px;font-weight:500}
+.switch input{accent-color:var(--accent);width:18px;height:18px;margin:0}
+
+/* workout card */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.wk-head{padding:20px 22px 16px;border-bottom:1px solid var(--line);display:grid;gap:8px;position:relative}
+.wk-head::before{content:"";position:absolute;inset:0 auto 0 0;width:6px;background:var(--tc,var(--accent))}
+.wk-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--soft);color:var(--ink)}
+.chip.t{background:var(--tc);color:var(--accent-ink)}
+.prog-note{font-size:13px;background:var(--soft);border-radius:10px;padding:8px 12px}
+.wk-body{padding:8px 22px 22px;display:grid;gap:20px}
+.blk{display:grid;gap:8px}
+.blk-h{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:4px}
+.blk-h .rep{font-family:var(--f-mono);font-size:13px;color:var(--accent);font-weight:500}
+.blk-note{font-size:13px;color:var(--muted);margin:0}
+.warm li{margin:2px 0}
+/* app-style: target muscle tiles + exercise rows with thumbnail and ⋮ */
+.wk-title{font-family:var(--f-body);text-transform:none;font-size:clamp(26px,5vw,32px);font-weight:700;letter-spacing:-.01em;line-height:1.15}
+.tm{display:grid;gap:8px}
+.tm-h{font-weight:700;font-size:16px}
+.tm-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.tm-row::-webkit-scrollbar{display:none}
+.tm-tile{flex:0 0 auto;display:flex;align-items:center;gap:10px;background:var(--soft);border-radius:12px;padding:8px 16px 8px 8px;min-width:150px}
+.tm-tile svg{width:44px;height:52px;flex:0 0 auto}
+.tm-tile b{display:block;font-size:15px;font-weight:500}
+.tm-tile span{font-size:12px;color:var(--muted)}
+.fig .b{fill:var(--line)} .fig .h{fill:var(--tc,var(--accent))}
+ol.ex{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+ol.ex li{background:var(--soft);border-radius:14px}
+ol.ex details>summary{list-style:none;display:grid;grid-template-columns:64px 1fr 28px;gap:14px;align-items:center;padding:10px 8px 10px 10px;cursor:pointer}
+ol.ex details>summary::-webkit-details-marker{display:none}
+.thumb{width:64px;height:64px;border-radius:10px;background:var(--surface);display:grid;place-items:center}
+.thumb svg{width:40px;height:52px}
+.ex-name{font-weight:600;font-size:16px;display:block;line-height:1.25}
+.ex-dose{font-size:13.5px;color:var(--muted);display:block;margin-top:2px}
+.ex-dose b{color:var(--ink);font-weight:700}
+.kebab{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;color:var(--muted);font-size:20px;line-height:1;font-weight:700}
+details[open] .kebab{background:var(--surface);color:var(--ink)}
+.ex-more{padding:0 14px 14px 88px;display:grid;gap:10px}
+.ex-cue{font-size:13.5px;color:var(--muted);margin:0;max-width:68ch}
+.ex-links{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;align-items:center}
+@media (max-width:560px){.ex-more{padding-left:14px}}
+.vid{display:inline-flex;align-items:center;gap:6px;font-weight:700;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 10px 3px 6px;color:var(--ink);background:var(--bg)}
+.vid:hover{border-color:var(--accent)}
+.vid i{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-style:normal;font-size:9px}
+.swap{font-size:12px;color:var(--warn);font-weight:700}
+.restday{padding:22px;display:grid;gap:10px}
+.restday p{margin:0;max-width:62ch}
+
+/* log */
+.log{border-top:1px solid var(--line);padding:18px 22px;display:grid;gap:12px;background:var(--soft)}
+.feel{display:flex;gap:8px;flex-wrap:wrap}
+.feel button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;font-weight:500}
+.feel button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.log textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--surface);color:var(--ink);font:inherit;resize:vertical}
+.log-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.btn{border:0;background:var(--accent);color:var(--accent-ink);font-weight:700;border-radius:12px;padding:11px 18px}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.saved{font-size:13px;color:var(--good);font-weight:700}
+.muted{color:var(--muted);font-size:13px}
+
+/* calendar */
+.cal{display:grid;gap:6px}
+.cal-scroll{overflow-x:auto}
+.cal-grid{display:grid;grid-template-columns:54px repeat(7,minmax(40px,1fr));gap:4px;min-width:0}
+.cal-dow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;font-weight:700}
+.cal-wk{font-family:var(--f-display);font-size:17px;font-weight:800;display:flex;flex-direction:column;justify-content:center;line-height:1}
+.cal-wk small{font-family:var(--f-body);font-size:10px;color:var(--muted);font-weight:500;letter-spacing:.04em}
+.cell{border:1px solid var(--line);background:var(--surface);border-radius:10px;min-height:54px;padding:5px 6px;display:flex;flex-direction:column;justify-content:space-between;text-align:left;color:var(--ink);position:relative}
+.cell .d{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.cell .lab{font-size:11px;font-weight:700;color:var(--tc);line-height:1.1}
+.cell.rest .lab,.cell.active .lab{color:var(--muted);font-weight:500}
+.cell.main{border-left:4px solid var(--tc)}
+.cell.today{outline:2px solid var(--ink);outline-offset:1px}
+.cell.sel{background:var(--soft)}
+.cell.done::after{content:"✓";position:absolute;top:3px;right:5px;width:18px;height:18px;border-radius:50%;background:var(--good);color:var(--bg);font-size:11px;font-weight:700;display:grid;place-items:center}
+.cell.knee .d::after{content:" •";color:var(--warn);font-weight:700}
+.cell.past:not(.done).main{opacity:.65}
+.phase-row{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;padding-top:8px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--c);margin-right:6px;vertical-align:-1px}
+
+/* rules */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px}
+.rules section{display:grid;gap:6px;align-content:start}
+.rules ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.rules p{margin:0}
+@media (max-width:560px){
+  .cal-grid{grid-template-columns:38px repeat(7,minmax(36px,1fr));gap:3px}
+  .cell{min-height:46px;padding:4px}
+  .cell .lab .long{display:none}
+  .wk-head,.wk-body,.log{padding-left:16px;padding-right:16px}
+}
+@media (min-width:561px){.cell .lab .short{display:none}}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">12 semanas · 2 nov 2026 → 24 ene 2027</div>
+    <div class="hdr-row">
+      <h1>Plan Sculpt<br>de Lea</h1>
+      <div class="stats">
+        <div class="stat"><b class="mono" id="st-done">0</b><span>entrenos hechos</span></div>
+        <div class="stat"><b class="mono" id="st-week">1</b><span>semana actual</span></div>
+        <div class="stat"><b class="mono" id="st-streak">0</b><span>esta semana</span></div>
+      </div>
+    </div>
+    <p class="lede">Mismo formato que te mandaba Nicole: warm up, sets que se repiten, reps y pesos. Lunes piernas, miércoles brazos, viernes full body, sábado core. Cada 4 semanas sube de nivel.</p>
+    <div class="phasebar" id="phasebar"></div>
+    <div class="toggles">
+      <label class="switch" for="knee"><input type="checkbox" id="knee"> Modo rodilla: cambia lunges, saltos y squats pesados</label>
+    </div>
+  </header>
+
+  <main class="card" id="workout" aria-live="polite"></main>
+
+  <section class="cal" aria-labelledby="cal-h">
+    <div class="hdr-row"><h2 id="cal-h">Calendario</h2>
+      <div class="legend">
+        <span style="--c:var(--lower)">Piernas</span><span style="--c:var(--upper)">Brazos + core</span><span style="--c:var(--full)">Full body</span><span style="--c:var(--core)">Core + cardio</span><span style="--c:var(--active)">Activo / descanso</span>
+      </div>
+    </div>
+    <div class="cal-scroll"><div class="cal-grid" id="cal"></div></div>
+    <p class="muted">Toca cualquier día para ver su workout. ✓ = hecho · punto rojo = te dolió la rodilla.</p>
+  </section>
+
+  <section class="rules" aria-label="Reglas del plan">
+    <section>
+      <h3>Cómo usar los pesos</h3>
+      <p>Los pesos son un punto de partida, los mismos rangos que usabas con Nicole. Elige un peso donde las últimas 2 reps te cuesten pero la técnica no se rompa.</p>
+      <ul><li>Si terminas las reps fácil: la próxima vez sube 2–5 lbs.</li><li>Si pierdes la forma: baja peso, sin pena.</li><li>Descanso: 45–60 seg al terminar cada ronda (no entre ejercicios).</li></ul>
+    </section>
+    <section>
+      <h3>Tu rodilla</h3>
+      <ul><li>Prende el modo rodilla los días que te moleste. Cambia lunges, saltos y sentadillas profundas por ejercicios de cadera.</li><li>Dolor punzante o adentro de la rodilla = para ese ejercicio. Cansancio en el músculo = normal.</li><li>En leg press pon los pies altos y abiertos: trabaja más glúteo y menos rodilla.</li><li>Nicole te dijo que te revisaras. Si sigue doliendo en 2–3 semanas, ve a un fisio.</li></ul>
+    </section>
+    <section>
+      <h3>Para llegar a la foto</h3>
+      <ul><li>Hombros y espalda marcados = mucho lateral raise, rows y lat pull down. Por eso se repiten.</li><li>Abs visibles dependen sobre todo de la comida: proteína en cada comida y 8–10k pasos diarios.</li><li>Constancia &gt; perfección. 3 entrenos por semana durante 12 semanas cambian el cuerpo.</li><li>Si te saltas un día, haz el que sigue. No los dobles.</li></ul>
+    </section>
+    <section>
+      <h3>Lo que tiene tu gym</h3>
+      <p>Sacado del video que mandaste a Nicole. Todo el plan usa solo esto:</p>
+      <ul><li>Leg press, máquina de leg extension / leg curl</li><li>Chest press de máquina, lat pull down con row</li><li>Torre de cables doble (kickbacks, abductores, face pulls, triceps)</li><li>Rack con barra, discos y bancos (hip thrust con barra)</li><li>Mancuernas, caminadoras, bicis, elípticas y escaladora</li></ul>
+      <p class="muted">No tiene abductora, inner thigh machine ni lying leg curl. Por eso esos se hacen con cable.</p>
+    </section>
+    <section>
+      <h3>Siempre</h3>
+      <ul><li>Warm up: 5–8 min caminadora en incline 4–6.</li><li>Upper body: aprieta el abdomen y no arquees la espalda baja (por eso te dolió la espalda en septiembre).</li><li>Estira 5 min al final.</li><li>Los videos abren YouTube con tutoriales de técnica. Mira uno antes de hacer un ejercicio nuevo.</li></ul>
+    </section>
+  </section>
+</div>
+
+<script>
+(function(){
+const START = new Date(2026,10,2); // lunes 2 nov 2026
+const WEEKS = 12;
+const DOW = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const DOWL = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const SLOT = ['lower','active','upper','active','full','core','rest'];
+const TYPE = {
+  lower:{lab:'Piernas',short:'L',c:'var(--lower)'}, upper:{lab:'Brazos',short:'U',c:'var(--upper)'},
+  full:{lab:'Full body',short:'F',c:'var(--full)'}, core:{lab:'Core',short:'C',c:'var(--core)'},
+  active:{lab:'Caminar',short:'·',c:'var(--active)'}, rest:{lab:'Descanso',short:'–',c:'var(--active)'}
+};
+const PHASES = [
+  {n:'Fase 1 · Base', w:'Sem 1–4', d:'Técnica y constancia. 3 rondas, pesos cómodos. Semanas 3–4: +1 ronda.'},
+  {n:'Fase 2 · Fuerza', w:'Sem 5–8', d:'4 rondas y más peso. Entran finishers. Semanas 7–8: sube el peso.'},
+  {n:'Fase 3 · Sculpt', w:'Sem 9–12', d:'Pesado + tempo lento + supersets. Semanas 11–12: sube el peso otra vez.'}
+];
+
+// Ejercicios: n nombre, c tip de técnica, q búsqueda de video, k = cambio si modo rodilla
+const X = {
+  hip_thrust:{n:'Hip Thrust',c:'Espalda alta apoyada en el bench, mentón abajo. Empuja con los talones y aprieta la nalga 1 seg arriba. Hasta 45 lbs usa 1 mancuerna en la cadera; de 45 en adelante usa la barra del rack (pesa 45 sola) con un pad o toalla, y le pones discos.',q:'barbell hip thrust form women'},
+  hip_thrust_pulse:{n:'Hip Thrust pulses',c:'Quédate arriba y haz pulsos cortos sin bajar del todo.',q:'hip thrust pulses'},
+  glute_bridge:{n:'Glute Bridge con pesa',c:'Acostada, pesa en la cadera, pies cerca de la nalga. Sube apretando glúteo.',q:'weighted glute bridge form'},
+  sl_bridge:{n:'Single Leg Glute Bridge',c:'Una pierna arriba, empuja con el talón de la otra. Cadera nivelada.',q:'single leg glute bridge form'},
+  frog_pumps:{n:'Frog Pumps',c:'Plantas de los pies juntas, rodillas abiertas. Sube corto y rápido apretando.',q:'frog pumps glutes'},
+  rdl:{n:'Romanian Deadlift (RDL)',c:'Rodillas suaves, cadera hacia atrás como cerrando una puerta con la nalga. Pesas pegadas a las piernas, espalda recta. Bajas hasta media espinilla.',q:'dumbbell romanian deadlift form women'},
+  sl_rdl:{n:'Single Leg RDL',c:'Una pesa en la mano contraria a la pierna de apoyo. Cadera cuadrada al piso. Si pierdes balance, toca la pared.',q:'single leg romanian deadlift dumbbell form'},
+  kick_rdl:{n:'B-Stance RDL (kickstand)',c:'Un pie adelante con todo el peso, el de atrás solo de apoyo en la punta. Como el RDL pero una pierna trabaja más.',q:'kickstand b stance rdl'},
+  box_squat:{n:'Box Squat al bench',c:'Siéntate hacia atrás hasta tocar el bench y sube empujando talones. Rodillas en línea con los dedos. Es la sentadilla más amable con la rodilla.',q:'box squat to bench dumbbell form'},
+  goblet:{n:'Goblet Squat',c:'Pesa en el pecho, codos adentro, pecho arriba. Baja hasta donde no te duela.',q:'goblet squat form',k:'box_squat'},
+  sumo:{n:'Sumo Squat',c:'Pies más abiertos que hombros, puntas afuera. Baja recto y aprieta la nalga arriba.',q:'dumbbell sumo squat form'},
+  sumo_pulse:{n:'Sumo Squat + 2 pulsos',c:'Bajas, 2 pulsos cortos abajo, subes.',q:'sumo squat pulse'},
+  squat_press:{n:'Squat + Press',c:'Box squat con pesas en hombros; al subir empuja las pesas arriba. Un solo movimiento fluido.',q:'dumbbell squat to press thruster form',k:'bridge_press'},
+  bridge_press:{n:'Glute Bridge + Chest Press',c:'Acostada en bridge arriba, haz el press de pecho manteniendo la cadera arriba.',q:'glute bridge chest press dumbbell'},
+  leg_press:{n:'Leg Press',c:'Pies altos y abiertos en la plataforma (más glúteo, menos rodilla). Baja hasta 90° y no bloquees las rodillas arriba.',q:'leg press form glutes feet high'},
+  leg_curl:{n:'Seated Leg Curl (máquina)',c:'Rodillas alineadas con el eje de la máquina. Baja controlado 2 seg.',q:'seated leg curl machine form'},
+  lying_curl:{n:'Single Leg Curl (máquina)',c:'En la misma máquina de leg extension/curl, una pierna a la vez. Sube rápido, baja lento en 3 seg.',q:'single leg seated leg curl'},
+  kickback:{n:'Cable Kickback',c:'En la torre de cables, polea abajo. Tobillera en el tobillo (si no hay, mete el pie en el handle). Inclínate un poco, patada atrás con la pierna casi recta. Aprieta el glúteo, no la espalda.',q:'cable glute kickback form'},
+  abduction:{n:'Cable Hip Abduction',c:'Tu gym no tiene abductora: usa la torre de cables, polea abajo, tobillera en la pierna de afuera. Abre la pierna hacia el lado sin inclinar el torso. Con liga sentada también sirve.',q:'cable hip abduction glute medius'},
+  adduction:{n:'Cable Hip Adduction',c:'Reemplazo de la máquina de inner thighs. De lado a la torre de cables, tobillera en la pierna de adentro, cruza la pierna por delante del cuerpo lento.',q:'cable hip adduction inner thigh'},
+  band_walk:{n:'Lateral Band Walk',c:'Liga arriba de las rodillas, media sentadilla, pasos de lado sin juntar los pies.',q:'lateral band walk form'},
+  step_up:{n:'Step Up (bench bajo)',c:'Todo el pie arriba del bench. Sube empujando con el talón de esa pierna, sin impulsarte con la de abajo.',q:'dumbbell step up form glutes',k:'sl_bridge'},
+  rev_lunge:{n:'Reverse Lunge',c:'Paso largo hacia atrás, torso un poco inclinado adelante, rodilla de adelante encima del tobillo.',q:'reverse lunge dumbbell form',k:'kick_rdl'},
+  bulgarian:{n:'Bulgarian Split Squat',c:'Pie de atrás en el bench, inclínate un poco adelante para cargar glúteo. Baja lento.',q:'bulgarian split squat glute focus form',k:'kick_rdl'},
+  side_lunge:{n:'Side Lunge',c:'Paso de lado, cadera atrás, la otra pierna recta. Empuja para volver.',q:'dumbbell side lunge form',k:'band_walk'},
+  curtsy:{n:'Curtsy Lunge',c:'Cruza una pierna por detrás en diagonal, como reverencia.',q:'curtsy lunge form',k:'abduction'},
+  copenhagen:{n:'Copenhagen Plank',c:'Plancha de lado con la pierna de arriba apoyada en el bench (rodilla en el bench para la versión fácil). Trabaja el inner thigh.',q:'copenhagen plank beginner'},
+  squat_jump:{n:'Squat Jump',c:'Sentadilla y salto, aterriza suave.',q:'squat jump form',k:'squat_calf'},
+  squat_calf:{n:'Squat + Calf Raise (sin brinco)',c:'Sentadilla rápida y al subir te pones de puntitas. Mismo cardio, cero impacto.',q:'squat to calf raise'},
+  // upper
+  lat_pd:{n:'Lat Pull Down',c:'Pecho arriba, jala la barra al pecho con los codos hacia abajo. No te eches para atrás.',q:'lat pulldown form women'},
+  close_pd:{n:'Close Grip Pull Down',c:'Agarre cerrado (triángulo), codos pegados al cuerpo.',q:'close grip lat pulldown form'},
+  cable_row:{n:'Seated Cable Row',c:'Espalda recta, jala hacia el ombligo apretando los omóplatos. Sin balancearte.',q:'seated cable row form'},
+  sa_row:{n:'Single Arm Row',c:'Rodilla y mano en el bench, espalda plana. Jala la pesa hacia la cadera.',q:'single arm dumbbell row form'},
+  face_pull:{n:'Face Pulls (cable)',c:'Cuerda a la altura de la cara, jala hacia la frente abriendo los codos. Bueno para la postura.',q:'face pull form cable'},
+  sh_press:{n:'Shoulder Press sentada',c:'Sentada con espalda apoyada (cuida la espalda baja). Pesas a la altura de las orejas y empuja arriba.',q:'seated dumbbell shoulder press form'},
+  arnold:{n:'Arnold Press',c:'Empieza con palmas hacia ti y gira mientras empujas arriba.',q:'arnold press form'},
+  lat_raise:{n:'Lateral Raises',c:'Brazos casi rectos, sube hasta la altura de los hombros, meñique un poco arriba. Peso ligero, lento.',q:'dumbbell lateral raise form'},
+  rear_fly:{n:'Rear Delt Fly',c:'Inclinada adelante con espalda recta, abre los brazos como alas.',q:'bent over rear delt fly dumbbell form'},
+  front_raise:{n:'Cable Front Raise',c:'De espaldas o de frente al cable, sube con brazo recto hasta los hombros.',q:'cable front raise form'},
+  machine_chest:{n:'Chest Press (máquina)',c:'La máquina de press de las agarraderas amarillas. Asiento a la altura donde las manijas quedan a la mitad del pecho. Espalda pegada al respaldo.',q:'machine chest press form'},
+  chest_press:{n:'Chest Press en bench',c:'Acostada en el bench, pesas a la altura del pecho, empuja arriba. Pies firmes en el piso.',q:'dumbbell chest press form women'},
+  pullover:{n:'Dumbbell Pullover (bench)',c:'Cabeza al borde del bench para que los brazos bajen por afuera (como dijo Nicole). Brazos casi rectos.',q:'dumbbell pullover form'},
+  push_up:{n:'Push Up (incline)',c:'Manos en el bench, cuerpo en línea recta. Cuando sea fácil, bájalo al piso con rodillas y luego completo.',q:'incline push up progression women'},
+  curl:{n:'Bicep Curl',c:'Codos pegados al cuerpo, sube y baja lento sin balancearte.',q:'dumbbell bicep curl form'},
+  hammer:{n:'Hammer Curl',c:'Palmas mirándose, codos quietos.',q:'hammer curl form'},
+  curl_hammer:{n:'Bicep to Hammer',c:'Una rep normal de bicep y la siguiente hammer, alternando.',q:'bicep curl to hammer curl'},
+  pushdown:{n:'Tricep Pushdown (cable)',c:'Codos pegados a las costillas, solo se mueve el antebrazo.',q:'tricep pushdown cable form'},
+  oh_tricep:{n:'Overhead Tricep Extension',c:'Una pesa con las dos manos detrás de la cabeza, codos apuntando al techo.',q:'overhead dumbbell tricep extension form'},
+  dips:{n:'Tricep Dips (bench)',c:'Manos en el bench, codos hacia atrás (no a los lados). Rodillas dobladas para hacerlo más fácil.',q:'bench tricep dips form'},
+  renegade:{n:'Renegade Row',c:'Plancha sobre las pesas (rodillas abajo si hace falta), jala una pesa sin girar la cadera.',q:'renegade row form modification'},
+  // core
+  plank:{n:'Plank',c:'Antebrazos abajo, cuerpo recto, aprieta nalga y abdomen.',q:'plank form'},
+  taps:{n:'Plank Shoulder Taps',c:'Plancha alta, tócate el hombro contrario sin mover la cadera.',q:'plank shoulder taps form'},
+  side_plank:{n:'Side Plank',c:'Cadera arriba, cuerpo en línea. Rodilla abajo para versión fácil.',q:'side plank form'},
+  dead_bug:{n:'Dead Bug',c:'Espalda baja PEGADA al piso. Extiende brazo y pierna contrarios lento.',q:'dead bug exercise form'},
+  bird_dog:{n:'Bird Dog',c:'En cuatro puntos, extiende brazo y pierna contrarios sin mover la cadera.',q:'bird dog exercise form'},
+  russian:{n:'Russian Twist',c:'Sentada inclinada atrás, gira el torso de lado a lado. Pies abajo si cuesta.',q:'russian twist form'},
+  rev_crunch:{n:'Reverse Crunch',c:'Acostada, sube la cadera del piso con el abdomen, sin impulso.',q:'reverse crunch form'},
+  hollow:{n:'Hollow Hold',c:'Espalda baja pegada al piso, brazos y piernas extendidos arriba del piso. Rodillas dobladas = versión fácil.',q:'hollow body hold beginner'},
+  leg_raise:{n:'Leg Raises',c:'Manos bajo la cadera, baja las piernas solo hasta donde la espalda siga pegada.',q:'lying leg raise form'},
+  pallof:{n:'Pallof Press',c:'De lado al cable, empuja las manos al frente y aguanta sin dejar que te gire.',q:'pallof press form'},
+  climbers:{n:'Mountain Climbers (lento)',c:'Plancha alta, rodilla al pecho alternando, controlado.',q:'slow mountain climbers form'},
+  plank_jack:{n:'Plank Jacks',c:'Plancha alta abriendo y cerrando los pies con brinquito.',q:'plank jacks form',k:'plank_step'},
+  plank_step:{n:'Plank Step Outs',c:'Igual que plank jacks pero pasito a pasito, sin brinco.',q:'plank step out low impact'}
+};
+
+function e(id,reps,lo,hi,u){return {id,reps,lo:lo??null,hi:hi??null,u:u||''}}
+const C='lbs c/brazo', L='lbs', BW='', BAND='liga';
+const WARM_L=['5–8 min caminadora incline 4–6','2 veces: 12 glute bridges + 12 aperturas con liga'];
+const WARM_U=['5 min caminadora incline','3 veces: plank 30 seg + 16 shoulder taps'];
+const WARM_F=['5–8 min caminadora incline 4–6','2 veces: 10 box squats sin peso + 10 arm circles'];
+
+const W = [
+ { // FASE 1
+  lowerA:{t:'Lower Body · Glúteos',warm:WARM_L,sets:[
+    {n:'Set 1',r:3,x:[e('hip_thrust','12',35,45,L),e('box_squat','12',12,15,C),e('kickback','12 c/pierna',10,15,L)]},
+    {n:'Set 2',r:3,x:[e('rdl','12',12,15,C),e('leg_curl','12',40,50,L),e('abduction','20',null,null,BAND)]}]},
+  lowerB:{t:'Lower Body · Máquinas',warm:WARM_L,sets:[
+    {n:'Set 1',r:3,x:[e('leg_press','12',40,60,L),e('sumo','12',20,25,L),e('frog_pumps','20')]},
+    {n:'Set 2',r:3,x:[e('lying_curl','12 c/pierna',15,20,L),e('step_up','10 c/pierna',8,10,C),e('adduction','12 c/pierna',10,15,L)]}]},
+  upperA:{t:'Upper Body + Core',warm:WARM_U,sets:[
+    {n:'Set 1',r:3,x:[e('lat_pd','12',40,50,L),e('sh_press','12',8,10,C),e('cable_row','12',40,40,L)]},
+    {n:'Set 2',r:3,x:[e('lat_raise','12',5,8,C),e('curl','12',8,10,C),e('pushdown','12',15,20,L)]},
+    {n:'Core',r:2,core:1,x:[e('dead_bug','16'),e('side_plank','20 seg c/lado')]}]},
+  upperB:{t:'Upper Body + Core',warm:WARM_U,sets:[
+    {n:'Set 1',r:3,x:[e('sa_row','12 c/brazo',12,15,L),e('machine_chest','12',20,30,L),e('face_pull','12',30,40,L)]},
+    {n:'Set 2',r:3,x:[e('arnold','12',8,8,C),e('hammer','12',8,10,C),e('oh_tricep','12',10,12,L)]},
+    {n:'Core',r:2,core:1,x:[e('bird_dog','10 c/lado'),e('plank','30 seg')]}]},
+  fullA:{t:'Full Body + Cardio',warm:WARM_F,sets:[
+    {n:'Set 1',r:3,x:[e('squat_press','12',8,10,C),e('renegade','12',8,10,C),e('rdl','12',12,15,C)]},
+    {n:'Cardio',r:3,core:1,note:'2 min trote o caminata rápida + 1 min caminar. Modo rodilla: hazlo en la bici o la elíptica (fuerte / suave).',x:[]},
+    {n:'Set 2',r:3,x:[e('lat_pd','12',40,50,L),e('band_walk','10 c/lado',null,null,BAND),e('climbers','20')]}]},
+  fullB:{t:'Full Body + Cardio',warm:WARM_F,sets:[
+    {n:'Set 1',r:3,x:[e('hip_thrust','12',35,45,L),e('push_up','8'),e('cable_row','12',40,40,L)]},
+    {n:'Set 2',r:3,x:[e('rev_lunge','8 c/pierna'),e('lat_raise','12',5,8,C),e('russian','20')]},
+    {n:'Finisher',r:2,core:1,note:'40 seg trabajo / 20 seg descanso, alternando los dos.',x:[e('squat_calf','40 seg'),e('plank_step','40 seg')]}]},
+  core:{t:'Core + Cardio',warm:['25 min caminadora incline 8–12, paso cómodo (puedes ver una serie)'],sets:[
+    {n:'Core',r:3,core:1,x:[e('dead_bug','16'),e('side_plank','20 seg c/lado'),e('rev_crunch','12'),e('plank','30 seg')]}]}
+ },
+ { // FASE 2
+  lowerA:{t:'Lower Body · Glúteos',warm:WARM_L,sets:[
+    {n:'Set 1',r:4,x:[e('hip_thrust','10',50,65,L),e('rdl','10',15,20,C),e('kickback','15 c/pierna',15,15,L)]},
+    {n:'Set 2',r:4,x:[e('leg_press','12',60,80,L),e('sl_rdl','10 c/pierna',12,15,L),e('abduction','20',null,null,BAND)]},
+    {n:'Finisher',r:2,core:1,note:'Glute burnout, sin descanso entre los dos.',x:[e('frog_pumps','20'),e('hip_thrust_pulse','30 seg',25,25,L)]}]},
+  lowerB:{t:'Lower Body · Inner thighs',warm:WARM_L,sets:[
+    {n:'Set 1',r:4,x:[e('goblet','12',20,25,L),e('lying_curl','12 c/pierna',20,25,L),e('kick_rdl','10 c/pierna',15,15,L)]},
+    {n:'Set 2',r:4,x:[e('sumo','12',25,30,L),e('adduction','12 c/pierna',15,15,L),e('step_up','10 c/pierna',10,12,C),e('copenhagen','20 seg c/lado')]}]},
+  upperA:{t:'Upper Body · Hombros y espalda',warm:WARM_U,sets:[
+    {n:'Set 1',r:4,x:[e('lat_pd','10',50,60,L),e('sh_press','10',10,12,C),e('sa_row','10 c/brazo',15,20,L)]},
+    {n:'Set 2',r:4,x:[e('lat_raise','15',8,8,C),e('rear_fly','12',5,8,C),e('dips','12')]},
+    {n:'Core',r:3,core:1,x:[e('hollow','20 seg'),e('russian','20',8,8,L),e('side_plank','30 seg c/lado')]}]},
+  upperB:{t:'Upper Body + Core',warm:WARM_U,sets:[
+    {n:'Set 1',r:4,x:[e('pullover','12',15,15,L),e('chest_press','10',12,15,C),e('cable_row','10',50,50,L)]},
+    {n:'Set 2',r:4,x:[e('arnold','10',10,10,C),e('curl_hammer','12',10,10,C),e('oh_tricep','12',12,15,L)]},
+    {n:'Core',r:3,core:1,x:[e('taps','20'),e('rev_crunch','15'),e('dead_bug','20')]}]},
+  fullA:{t:'Full Body + Cardio',warm:WARM_F,sets:[
+    {n:'Set 1',r:4,x:[e('squat_press','12',10,12,C),e('renegade','12',10,10,C),e('hip_thrust','12',45,50,L)]},
+    {n:'Cardio',r:4,core:1,note:'1 min corriendo + 1 min caminando. Modo rodilla: bici o elíptica, 1 min fuerte + 1 min suave.',x:[]},
+    {n:'Set 2',r:4,x:[e('lat_pd','12',45,55,L),e('side_lunge','10 c/lado',8,10,C),e('climbers','30')]}]},
+  fullB:{t:'Full Body + Cardio',warm:WARM_F,sets:[
+    {n:'Set 1',r:3,x:[e('rdl','12',15,20,C),e('push_up','10'),e('face_pull','15',35,40,L)]},
+    {n:'Set 2',r:3,x:[e('rev_lunge','10 c/pierna',8,10,C),e('lat_raise','15',8,8,C),e('plank_jack','30 seg')]},
+    {n:'Finisher Tabata',r:4,core:1,note:'40 seg trabajo / 20 seg descanso, alternando. 8 min total.',x:[e('squat_jump','40 seg'),e('climbers','40 seg')]}]},
+  core:{t:'Core + Cardio',warm:['30 min caminadora incline 10–12'],sets:[
+    {n:'Core',r:3,core:1,x:[e('hollow','20 seg'),e('side_plank','30 seg c/lado'),e('leg_raise','12'),e('pallof','12 c/lado',15,20,L)]}]}
+ },
+ { // FASE 3
+  lowerA:{t:'Lower Body · Glúteos pesado',warm:WARM_L,sets:[
+    {n:'Set 1',r:4,note:'Hip thrust con pausa de 3 seg arriba. RDL bajando en 3 seg.',x:[e('hip_thrust','8',65,85,L),e('rdl','10',20,25,C),e('kickback','15 c/pierna',15,20,L)]},
+    {n:'Set 2',r:4,x:[e('leg_press','10',80,100,L),e('sl_rdl','10 c/pierna',15,20,L),e('abduction','25',null,null,BAND)]},
+    {n:'Finisher',r:3,core:1,note:'Sin descanso entre los dos.',x:[e('hip_thrust_pulse','30 seg',35,35,L),e('glute_bridge','30 seg aguantando arriba',35,35,L)]}]},
+  lowerB:{t:'Lower Body · Inner thighs',warm:WARM_L,sets:[
+    {n:'Set 1',r:4,x:[e('bulgarian','10 c/pierna',12,15,C),e('lying_curl','12 c/pierna',25,30,L),e('sumo_pulse','12',30,35,L)]},
+    {n:'Set 2',r:4,note:'Box squat bajando en 3 seg.',x:[e('box_squat','12',25,30,L),e('adduction','15 c/pierna',15,20,L),e('step_up','12 c/pierna',12,15,C),e('copenhagen','30 seg c/lado')]}]},
+  upperA:{t:'Upper Body · Hombros y espalda',warm:WARM_U,sets:[
+    {n:'Set 1',r:4,x:[e('lat_pd','10',55,65,L),e('sh_press','10',12,15,C),e('sa_row','10 c/brazo',20,25,L)]},
+    {n:'Superset',r:4,note:'Lateral + rear fly seguidos sin soltar las pesas.',x:[e('lat_raise','15',8,10,C),e('rear_fly','15',8,8,C),e('dips','15'),e('curl','12',10,12,C)]},
+    {n:'Core',r:3,core:1,x:[e('hollow','30 seg'),e('russian','24',10,10,L),e('side_plank','40 seg c/lado')]}]},
+  upperB:{t:'Upper Body + Core',warm:WARM_U,sets:[
+    {n:'Set 1',r:4,x:[e('pullover','12',20,20,L),e('chest_press','10',15,15,C),e('cable_row','10',55,60,L)]},
+    {n:'Set 2',r:4,x:[e('arnold','10',10,12,C),e('face_pull','15',40,40,L),e('push_up','10'),e('oh_tricep','12',15,15,L)]},
+    {n:'Core',r:3,core:1,x:[e('taps','24'),e('leg_raise','15'),e('dead_bug','20')]}]},
+  fullA:{t:'Full Body + Cardio',warm:WARM_F,sets:[
+    {n:'Set 1',r:4,x:[e('squat_press','12',12,15,C),e('renegade','12',12,12,C),e('hip_thrust','12',60,60,L)]},
+    {n:'Cardio',r:5,core:1,note:'1 min corriendo rápido + 1 min caminando. Modo rodilla: bici o elíptica, 1 min a tope + 1 min suave.',x:[]},
+    {n:'Set 2',r:4,x:[e('lat_pd','12',50,60,L),e('rev_lunge','10 c/pierna',10,12,C),e('climbers','40')]}]},
+  fullB:{t:'Full Body + Cardio',warm:WARM_F,sets:[
+    {n:'Set 1',r:4,x:[e('rdl','10',20,25,C),e('push_up','10'),e('sa_row','12 c/brazo',20,20,L)]},
+    {n:'Set 2',r:4,x:[e('side_lunge','10 c/lado',10,12,C),e('arnold','10',10,10,C),e('plank_jack','40 seg')]},
+    {n:'Finisher Tabata',r:4,core:1,note:'40 seg trabajo / 20 seg descanso, alternando. 8 min seguidos.',x:[e('squat_jump','40 seg'),e('climbers','40 seg')]}]},
+  core:{t:'Core + Cardio',warm:['35 min caminadora incline 10–12, o 15–20 min en la escaladora (stairs)'],sets:[
+    {n:'Core',r:4,core:1,x:[e('hollow','30 seg'),e('side_plank','40 seg c/lado'),e('leg_raise','15'),e('pallof','12 c/lado',20,25,L)]}]}
+ }
+];
+
+function bump(v){return v>=40?10:v>=15?5:2}
+function dateFor(w,d){const x=new Date(START);x.setDate(x.getDate()+(w-1)*7+d);return x}
+function fmt(d){return d.toLocaleDateString('es',{day:'numeric',month:'short'})}
+function key(w,d){return 'w'+String(w).padStart(2,'0')+'-'+d}
+function session(w,d){
+  const ph=Math.ceil(w/4)-1, pw=(w-1)%4+1, slot=SLOT[d];
+  if(slot==='active'||slot==='rest') return {slot,ph,pw};
+  const v=slot==='core'?'core':slot+(pw%2?'A':'B');
+  return {slot,ph,pw,v,wo:W[ph][v],up:pw>=3};
+}
+function todayIdx(){
+  const t=new Date(); t.setHours(0,0,0,0);
+  const diff=Math.round((t-START)/864e5);
+  return {diff,w:Math.floor(diff/7)+1,d:((diff%7)+7)%7};
+}
+
+let knee=false; try{knee=localStorage.getItem('lea-knee')==='1'}catch(_){}
+const kneeEl=document.getElementById('knee'); kneeEl.checked=knee;
+kneeEl.addEventListener('change',()=>{knee=kneeEl.checked;try{localStorage.setItem('lea-knee',knee?'1':'0')}catch(_){}renderWorkout()});
+
+const T=todayIdx();
+let sel = T.diff<0?{w:1,d:0}:T.w>WEEKS?{w:WEEKS,d:4}:{w:T.w,d:T.d};
+// el progreso se guarda en este cel (localStorage)
+let log={}; try{log=JSON.parse(localStorage.getItem('lea-log')||'{}')}catch(_){log={}}
+let dbState='ready';
+function saveLog(){try{localStorage.setItem('lea-log',JSON.stringify(log));return true}catch(_){return false}}
+
+function phasebar(){
+  const cur=Math.min(2,Math.max(0,Math.ceil(sel.w/4)-1));
+  document.getElementById('phasebar').innerHTML=PHASES.map((p,i)=>`<div class="${i===cur?'on':''}"><b>${p.n}</b> · ${p.w}</div>`).join('');
+}
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function vid(q){return 'https://www.youtube.com/results?search_query='+encodeURIComponent(q+' tutorial')}
+
+// Músculo principal de cada ejercicio (para los tiles de Target Muscles y el dibujito)
+const MUS = {
+  glutes:'Glutes', hams:'Hamstrings', quads:'Quads', inner:'Inner thighs', back:'Back',
+  shoulders:'Shoulders', chest:'Chest', arms:'Arms', core:'Core'
+};
+const M = {
+  hip_thrust:'glutes',hip_thrust_pulse:'glutes',glute_bridge:'glutes',sl_bridge:'glutes',frog_pumps:'glutes',
+  kickback:'glutes',abduction:'glutes',band_walk:'glutes',step_up:'glutes',bulgarian:'glutes',curtsy:'glutes',
+  rdl:'hams',sl_rdl:'hams',kick_rdl:'hams',leg_curl:'hams',lying_curl:'hams',
+  box_squat:'quads',goblet:'quads',sumo:'inner',sumo_pulse:'inner',squat_press:'quads',leg_press:'quads',
+  rev_lunge:'quads',side_lunge:'inner',squat_jump:'quads',squat_calf:'quads',
+  adduction:'inner',copenhagen:'inner',
+  lat_pd:'back',close_pd:'back',cable_row:'back',sa_row:'back',pullover:'back',renegade:'back',
+  sh_press:'shoulders',arnold:'shoulders',lat_raise:'shoulders',rear_fly:'shoulders',front_raise:'shoulders',face_pull:'shoulders',
+  machine_chest:'chest',chest_press:'chest',push_up:'chest',bridge_press:'chest',
+  curl:'arms',hammer:'arms',curl_hammer:'arms',pushdown:'arms',oh_tricep:'arms',dips:'arms',
+  plank:'core',taps:'core',side_plank:'core',dead_bug:'core',bird_dog:'core',russian:'core',rev_crunch:'core',
+  hollow:'core',leg_raise:'core',pallof:'core',climbers:'core',plank_jack:'core',plank_step:'core'
+};
+// figurita: se pinta del color del día la zona que trabaja
+function fig(m){
+  const h=k=>k===m?'h':'b';
+  const back=m==='glutes'||m==='hams'||m==='back';
+  return `<svg class="fig" viewBox="0 0 40 60" aria-hidden="true">
+  <circle class="b" cx="20" cy="5.5" r="4"/>
+  <circle class="${h('shoulders')}" cx="12.5" cy="13.5" r="3.6"/><circle class="${h('shoulders')}" cx="27.5" cy="13.5" r="3.6"/>
+  <rect class="${h('arms')}" x="7.5" y="16" width="4.2" height="15" rx="2.1"/><rect class="${h('arms')}" x="28.3" y="16" width="4.2" height="15" rx="2.1"/>
+  <rect class="${back?h('back'):h('chest')}" x="13.5" y="10.5" width="13" height="10" rx="3"/>
+  <rect class="${h('core')}" x="14.5" y="21.5" width="11" height="8" rx="2.5"/>
+  <ellipse class="${h('glutes')}" cx="16.6" cy="32.5" rx="4" ry="3.8"/><ellipse class="${h('glutes')}" cx="23.4" cy="32.5" rx="4" ry="3.8"/>
+  <rect class="${m==='quads'||m==='hams'?'h':'b'}" x="12.6" y="35" width="6" height="13" rx="3"/><rect class="${m==='quads'||m==='hams'?'h':'b'}" x="21.4" y="35" width="6" height="13" rx="3"/>
+  ${m==='inner'?'<rect class="h" x="16.2" y="35.5" width="2.4" height="12" rx="1.2"/><rect class="h" x="21.4" y="35.5" width="2.4" height="12" rx="1.2"/>':''}
+  <rect class="b" x="13.6" y="49" width="4" height="10" rx="2"/><rect class="b" x="22.4" y="49" width="4" height="10" rx="2"/>
+</svg>`;
+}
+function realId(id){return knee&&X[id].k?X[id].k:id}
+
+function exHTML(it,i,up,rounds){
+  const id=realId(it.id), swapped=id!==it.id;
+  const x=X[id];
+  let lo=it.lo,hi=it.hi;
+  if(up&&lo!=null&&sel.ph>0){lo+=bump(lo);hi+=bump(hi)}
+  let w='';
+  if(lo!=null) w=(lo===hi?lo:lo+'–'+hi)+' '+it.u;
+  else if(it.u) w=it.u;
+  const reps=/^\d+$/.test(it.reps)?it.reps+' reps':it.reps;
+  const dose=`<b>${rounds} sets</b> • ${esc(reps)}${w?' • '+esc(w):''}`;
+  return `<li><details><summary><span class="thumb">${fig(M[id])}</span>
+    <span><span class="ex-name">${esc(x.n)}</span><span class="ex-dose">${dose}</span></span>
+    <span class="kebab" aria-label="ver técnica y video">⋮</span></summary>
+  <div class="ex-more"><p class="ex-cue">${esc(x.c)}</p>
+  <div class="ex-links"><a class="vid" href="${vid(x.q)}" target="_blank" rel="noopener"><i>▶</i>Ver video</a>${swapped?`<span class="swap">cambio por rodilla (era ${esc(X[it.id].n)})</span>`:''}</div></div></details></li>`;
+}
+
+// % de cada músculo = sets de ese músculo / sets totales del día
+function targets(wo,p1Up){
+  const cnt={}; let tot=0;
+  wo.sets.forEach(st=>{const r=st.r+(p1Up&&!st.core?1:0);st.x.forEach(it=>{const m=M[realId(it.id)];cnt[m]=(cnt[m]||0)+r;tot+=r})});
+  if(!tot) return '';
+  const list=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  return `<div class="tm"><div class="tm-h">Target Muscles</div><div class="tm-row">${list.map(([m,n])=>
+    `<div class="tm-tile">${fig(m)}<div><b>${MUS[m]}</b><span>${Math.round(n/tot*20)*5}%</span></div></div>`).join('')}</div></div>`;
+}
+
+function renderWorkout(){
+  const {w,d}=sel; const s=session(w,d); sel.ph=s.ph;
+  const el=document.getElementById('workout');
+  const date=dateFor(w,d);
+  const isToday=(T.w===w&&T.d===d&&T.diff>=0);
+  const ty=TYPE[s.slot];
+  const when=`${isToday?'Hoy · ':''}${DOWL[d]} ${fmt(date)} · Semana ${w}`;
+  if(!s.wo){
+    const nextMain=findNext(w,d);
+    el.style.setProperty('--tc',ty.c);
+    el.innerHTML=`<div class="wk-head"><div class="eyebrow">${when}</div><h2>${s.slot==='rest'?'Descanso total':'Día activo'}</h2></div>
+    <div class="restday">${s.slot==='rest'
+      ?'<p>Hoy no se entrena. Duerme bien y come proteína. El músculo crece cuando descansas.</p>'
+      :'<p>8,000–10,000 pasos o 30–40 min de caminata en caminadora incline 4–6. Si tienes ganas, 10 min de estiramiento.</p><p class="muted">Esto es lo que Nicole les respondió a Paulette: los días sin pesas, caminar está perfecto.</p>'}
+      ${nextMain?`<p>Siguiente entreno: <button class="btn ghost" id="go-next">${DOWL[nextMain.d]} ${fmt(dateFor(nextMain.w,nextMain.d))} · ${esc(session(nextMain.w,nextMain.d).wo.t)}</button></p>`:''}
+    </div>`;
+    const b=document.getElementById('go-next'); if(b) b.onclick=()=>{sel={w:nextMain.w,d:nextMain.d};renderAll()};
+    return;
+  }
+  const wo=s.wo, p1Up=s.up&&s.ph===0;
+  el.style.setProperty('--tc',ty.c);
+  let prog='';
+  if(s.up) prog = s.ph===0 ? 'Semana de subir: misma rutina que hace 2 semanas pero con 1 ronda más en cada set.' : 'Semana de subir: los pesos ya están aumentados respecto a hace 2 semanas. Si no llegas a las reps, usa el peso anterior.';
+  const sets=wo.sets.map(st=>{
+    const r=st.r+(p1Up&&!st.core?1:0);
+    return `<div class="blk"><div class="blk-h"><h3>${esc(st.n)}</h3><span class="rep">repetir ${r} veces</span></div>
+      ${st.note?`<p class="blk-note">${esc(st.note)}</p>`:''}
+      ${st.x.length?`<ol class="ex">${st.x.map((it,i)=>exHTML(it,i,s.up,r)).join('')}</ol>`:''}</div>`;
+  }).join('');
+  el.innerHTML=`<div class="wk-head"><div class="eyebrow">${when}</div><h2 class="wk-title">${esc(wo.t)}</h2>
+    <div class="wk-meta"><span class="chip t">${ty.lab}</span><span class="chip">${PHASES[s.ph].n}</span>${s.slot==='core'?'<span class="chip">opcional</span>':''}<span class="chip">Descanso 45–60 seg por ronda</span></div>
+    ${prog?`<div class="prog-note">${prog}</div>`:''}</div>
+  <div class="wk-body">
+    ${targets(wo,p1Up)}
+    <div class="blk warm"><div class="blk-h"><h3>Warm up</h3></div><ul>${wo.warm.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+    ${sets}
+    <div class="blk"><div class="blk-h"><h3>Stretch</h3></div><p class="blk-note">5 min estirando lo que trabajaste.</p></div>
+  </div>
+  <div class="log" id="logbox"></div>`;
+  renderLog();
+}
+
+function renderLog(){
+  const box=document.getElementById('logbox'); if(!box) return;
+  const k=key(sel.w,sel.d); const r=log[k]||{};
+  if(dbState!=='ready'){
+    box.innerHTML=`<p class="muted">${dbState==='loading'?'Cargando tu progreso…':'Para guardar tu progreso abre esta página en claude.ai con tu cuenta.'}</p>`;return;
+  }
+  const feel=r.feel||'';
+  box.innerHTML=`<div class="log-row"><h3>${r.done?'Hecho ✓':'¿Lo hiciste?'}</h3>${r.done&&r.at?`<span class="muted">guardado ${new Date(r.at).toLocaleDateString('es',{day:'numeric',month:'short'})}</span>`:''}</div>
+   <div class="feel" role="group" aria-label="Cómo te fue">${['Fácil','Bien','Durísimo'].map(f=>`<button type="button" data-f="${f}" aria-pressed="${feel===f}">${f}</button>`).join('')}</div>
+   <label class="switch" for="kneehurt" style="justify-self:start"><input type="checkbox" id="kneehurt" ${r.knee?'checked':''}> Me dolió la rodilla</label>
+   <textarea id="lognote" placeholder="Notas: qué peso usaste, qué no tenía tu gym, qué te costó…">${esc(r.note||'')}</textarea>
+   <div class="log-row"><button class="btn" id="save">${r.done?'Actualizar':'Marcar como hecho'}</button>${r.done?'<button class="btn ghost" id="undo">Desmarcar</button>':''}<span class="saved" id="savemsg"></span></div>`;
+  let f=feel;
+  box.querySelectorAll('.feel button').forEach(b=>b.onclick=()=>{f=b.dataset.f;box.querySelectorAll('.feel button').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+  document.getElementById('save').onclick=async()=>{
+    const s=session(sel.w,sel.d);
+    const doc={done:true,feel:f,knee:document.getElementById('kneehurt').checked,note:document.getElementById('lognote').value.slice(0,2000),at:new Date().toISOString(),week:sel.w,day:DOWL[sel.d],workout:s.wo.t,kneeMode:knee};
+    const msg=document.getElementById('savemsg'); msg.textContent='Guardando…';
+    log[k]=doc; if(saveLog()){renderCal();renderStats();renderLog();document.getElementById('savemsg').textContent='Guardado'}else msg.textContent='No se pudo guardar en este navegador.';
+  };
+  const u=document.getElementById('undo');
+  if(u) u.onclick=()=>{delete log[k];saveLog();renderCal();renderStats();renderLog()};
+}
+
+function findNext(w,d){
+  for(let i=(w-1)*7+d+1;i<WEEKS*7;i++){const ww=Math.floor(i/7)+1,dd=i%7;const s=session(ww,dd);if(s.wo&&s.slot!=='core')return{w:ww,d:dd}}
+  return null;
+}
+
+function renderCal(){
+  const g=document.getElementById('cal');
+  let h='<div></div>'+DOW.map(x=>`<div class="cal-dow">${x}</div>`).join('');
+  for(let w=1;w<=WEEKS;w++){
+    if((w-1)%4===0) h+=`<div class="phase-row">${PHASES[(w-1)/4].n}</div>`;
+    h+=`<div class="cal-wk">S${w}<small>${fmt(dateFor(w,0))}</small></div>`;
+    for(let d=0;d<7;d++){
+      const s=session(w,d), ty=TYPE[s.slot], k=key(w,d), r=log[k];
+      const idx=(w-1)*7+d;
+      const cls=['cell',s.slot,s.wo&&s.slot!=='core'?'main':'',idx===T.diff?'today':'',idx<T.diff?'past':'',(sel.w===w&&sel.d===d)?'sel':'',r&&r.done?'done':'',r&&r.knee?'knee':''].join(' ');
+      const lab=s.wo?(s.slot==='lower'||s.slot==='upper'||s.slot==='full'?ty.lab:'Core'):ty.lab;
+      h+=`<button type="button" class="${cls}" style="--tc:${ty.c}" data-w="${w}" data-d="${d}" aria-label="${DOWL[d]} ${fmt(dateFor(w,d))}: ${lab}${r&&r.done?', hecho':''}"><span class="d">${dateFor(w,d).getDate()}</span><span class="lab"><span class="long">${lab}</span><span class="short">${ty.short}</span></span></button>`;
+    }
+  }
+  g.innerHTML=h;
+  g.querySelectorAll('.cell').forEach(c=>c.onclick=()=>{sel={w:+c.dataset.w,d:+c.dataset.d};renderAll();document.getElementById('workout').scrollIntoView({block:'start'})});
+}
+
+function renderStats(){
+  const done=Object.values(log).filter(r=>r.done).length;
+  document.getElementById('st-done').textContent=done;
+  const cw=Math.min(WEEKS,Math.max(1,T.w));
+  document.getElementById('st-week').textContent=T.diff<0?'1':cw;
+  let wk=0; for(let d=0;d<7;d++){const r=log[key(cw,d)];if(r&&r.done)wk++}
+  document.getElementById('st-streak').textContent=wk+'/3';
+}
+
+function renderAll(){phasebar();renderWorkout();renderCal();renderStats()}
+renderAll();
+
+})();
+</script>
+
+</body></html>
