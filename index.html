@@ -141,18 +141,20 @@ details[open] .kebab{background:var(--surface);color:var(--ink)}
 }
 @media (min-width:561px){.cell .lab .short{display:none}}
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+/* barra de tabs abajo, flotante como la de iPhone */
+.wrap{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
+.tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:10;display:flex;gap:4px;padding:6px;border-radius:999px;width:min(360px,calc(100% - 32px));
+  background:color-mix(in srgb,var(--surface) 72%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);border:1px solid var(--line);box-shadow:0 8px 28px rgba(42,22,32,.14);--tb-icon-cut:var(--surface)}
+.tabbar button{flex:1;display:grid;justify-items:center;gap:2px;border:0;background:transparent;color:var(--ink);border-radius:999px;padding:7px 4px 6px;font-size:12px;font-weight:600;-webkit-tap-highlight-color:transparent}
+.tabbar svg{width:26px;height:26px;fill:currentColor}
+.tabbar button[aria-current="page"]{color:var(--accent);background:color-mix(in srgb,var(--ink) 8%,transparent);--tb-icon-cut:var(--soft)}
 </style>
 
 <div class="wrap">
-  <header>
+  <header data-v="plan">
     <div class="eyebrow">12 semanas · 2 nov 2026 → 24 ene 2027</div>
     <div class="hdr-row">
       <h1>Plan Sculpt<br>de Lea</h1>
-      <div class="stats">
-        <div class="stat"><b class="mono" id="st-done">0</b><span>entrenos hechos</span></div>
-        <div class="stat"><b class="mono" id="st-week">1</b><span>semana actual</span></div>
-        <div class="stat"><b class="mono" id="st-streak">0</b><span>esta semana</span></div>
-      </div>
     </div>
     <p class="lede">Mismo formato que te mandaba Nicole: warm up, sets que se repiten, reps y pesos. Lunes piernas, miércoles brazos, viernes full body, sábado core. Cada 4 semanas sube de nivel.</p>
     <div class="phasebar" id="phasebar"></div>
@@ -161,19 +163,24 @@ details[open] .kebab{background:var(--surface);color:var(--ink)}
     </div>
   </header>
 
-  <main class="card" id="workout" aria-live="polite"></main>
+  <main class="card" id="workout" aria-live="polite" data-v="hoy"></main>
 
-  <section class="cal" aria-labelledby="cal-h">
+  <section class="cal" aria-labelledby="cal-h" data-v="calendario">
     <div class="hdr-row"><h2 id="cal-h">Calendario</h2>
       <div class="legend">
         <span style="--c:var(--lower)">Piernas</span><span style="--c:var(--upper)">Brazos + core</span><span style="--c:var(--full)">Full body</span><span style="--c:var(--core)">Core + cardio</span><span style="--c:var(--active)">Activo / descanso</span>
       </div>
     </div>
+        <div class="stats">
+      <div class="stat"><b class="mono" id="st-done">0</b><span>entrenos hechos</span></div>
+      <div class="stat"><b class="mono" id="st-week">1</b><span>semana actual</span></div>
+      <div class="stat"><b class="mono" id="st-streak">0</b><span>esta semana</span></div>
+    </div>
     <div class="cal-scroll"><div class="cal-grid" id="cal"></div></div>
     <p class="muted">Toca cualquier día para ver su workout. ✓ = hecho · punto rojo = te dolió la rodilla.</p>
   </section>
 
-  <section class="rules" aria-label="Reglas del plan">
+  <section class="rules" aria-label="Reglas del plan" data-v="plan">
     <section>
       <h3>Cómo usar los pesos</h3>
       <p>Los pesos son un punto de partida, los mismos rangos que usabas con Nicole. Elige un peso donde las últimas 2 reps te cuesten pero la técnica no se rompa.</p>
@@ -199,6 +206,12 @@ details[open] .kebab{background:var(--surface);color:var(--ink)}
     </section>
   </section>
 </div>
+
+<nav class="tabbar" aria-label="Secciones">
+  <button type="button" data-tab="hoy"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4.2" r="2.2"/><path d="M2 9.5h3v5H2zM19 9.5h3v5h-3zM5 11h14v2H5z"/><path d="M10 13.5h4l-.6 3.5 1.8 5h-2.2L12 18.6 11 22H8.8l1.8-5z"/><path d="M9.5 7.6h5l.9 3.4h-6.8z"/></svg><span>Hoy</span></button>
+  <button type="button" data-tab="calendario"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 5v10h14V9z"/><rect x="7" y="2" width="2" height="4" rx="1"/><rect x="15" y="2" width="2" height="4" rx="1"/><circle cx="8" cy="12" r="1.1"/><circle cx="12" cy="12" r="1.1"/><circle cx="16" cy="12" r="1.1"/><circle cx="8" cy="16" r="1.1"/><circle cx="12" cy="16" r="1.1"/><circle cx="16" cy="16" r="1.1"/></svg><span>Calendario</span></button>
+  <button type="button" data-tab="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 2h6a1 1 0 0 1 1 1v1h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V3a1 1 0 0 1 1-1z"/><g fill="var(--tb-icon-cut)"><rect x="9" y="9" width="8" height="1.8" rx=".9"/><rect x="9" y="13" width="8" height="1.8" rx=".9"/><rect x="9" y="17" width="8" height="1.8" rx=".9"/><circle cx="7" cy="9.9" r="1"/><circle cx="7" cy="13.9" r="1"/><circle cx="7" cy="17.9" r="1"/></g></svg><span>Plan</span></button>
+</nav>
 
 <script>
 (function(){
@@ -561,7 +574,7 @@ function renderCal(){
     }
   }
   g.innerHTML=h;
-  g.querySelectorAll('.cell').forEach(c=>c.onclick=()=>{sel={w:+c.dataset.w,d:+c.dataset.d};renderAll();document.getElementById('workout').scrollIntoView({block:'start'})});
+  g.querySelectorAll('.cell').forEach(c=>c.onclick=()=>{sel={w:+c.dataset.w,d:+c.dataset.d};renderAll();setTab('hoy')});
 }
 
 function renderStats(){
@@ -574,6 +587,17 @@ function renderStats(){
 }
 
 function renderAll(){phasebar();renderWorkout();renderCal();renderStats()}
+
+// tabs: Hoy / Calendario / Plan
+function setTab(t){
+  document.querySelectorAll("[data-v]").forEach(el=>{el.hidden=!el.dataset.v.split(" ").includes(t)});
+  document.querySelectorAll(".tabbar button").forEach(b=>{if(b.dataset.tab===t)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
+  window.scrollTo(0,0);
+}
+document.querySelectorAll(".tabbar button").forEach(b=>b.onclick=()=>{
+  if(b.dataset.tab==="hoy"&&b.getAttribute("aria-current")!=="page"){sel=T.diff<0?{w:1,d:0}:T.w>WEEKS?{w:WEEKS,d:4}:{w:T.w,d:T.d};renderAll()}
+  setTab(b.dataset.tab)});
+setTab("hoy");
 renderAll();
 
 })();
