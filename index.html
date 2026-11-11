@@ -141,6 +141,17 @@ details[open] .kebab{background:var(--surface);color:var(--ink)}
 }
 @media (min-width:561px){.cell .lab .short{display:none}}
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+/* knee friendly */
+.kneebox{display:grid;gap:6px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--surface)}
+.kneebox p{margin:0;font-size:13px;color:var(--muted)}
+.kneebox.on{border-color:var(--good);background:color-mix(in srgb,var(--good) 10%,var(--surface))}
+.kneebox.on p{color:var(--ink)}
+.kneebtn{justify-self:start;display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:9px 16px;font-weight:700;font-size:15px;background:var(--soft);color:var(--ink)}
+.kneebtn .kb-dot{width:30px;height:18px;border-radius:999px;background:var(--line);position:relative;transition:background .15s}
+.kneebtn .kb-dot::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
+.kneebtn[aria-pressed="true"]{background:var(--good);color:#fff}
+.kneebtn[aria-pressed="true"] .kb-dot{background:rgba(255,255,255,.4)}
+.kneebtn[aria-pressed="true"] .kb-dot::after{left:14px}
 /* barra de tabs abajo, flotante como la de iPhone */
 .wrap{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
 .tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:10;display:flex;gap:4px;padding:6px;border-radius:999px;width:min(360px,calc(100% - 32px));
@@ -244,7 +255,7 @@ const X = {
   box_squat:{n:'Box Squat al bench',c:'Siéntate hacia atrás hasta tocar el bench y sube empujando talones. Rodillas en línea con los dedos. Es la sentadilla más amable con la rodilla.',q:'box squat to bench dumbbell form'},
   goblet:{n:'Goblet Squat',c:'Pesa en el pecho, codos adentro, pecho arriba. Baja hasta donde no te duela.',q:'goblet squat form',k:'box_squat'},
   sumo:{n:'Sumo Squat',c:'Pies más abiertos que hombros, puntas afuera. Baja recto y aprieta la nalga arriba.',q:'dumbbell sumo squat form'},
-  sumo_pulse:{n:'Sumo Squat + 2 pulsos',c:'Bajas, 2 pulsos cortos abajo, subes.',q:'sumo squat pulse'},
+  sumo_pulse:{n:'Sumo Squat + 2 pulsos',c:'Bajas, 2 pulsos cortos abajo, subes.',q:'sumo squat pulse',k:'glute_bridge'},
   squat_press:{n:'Squat + Press',c:'Box squat con pesas en hombros; al subir empuja las pesas arriba. Un solo movimiento fluido.',q:'dumbbell squat to press thruster form',k:'bridge_press'},
   bridge_press:{n:'Glute Bridge + Chest Press',c:'Acostada en bridge arriba, haz el press de pecho manteniendo la cadera arriba.',q:'glute bridge chest press dumbbell'},
   leg_press:{n:'Leg Press',c:'Pies altos y abiertos en la plataforma (más glúteo, menos rodilla). Baja hasta 90° y no bloquees las rodillas arriba.',q:'leg press form glutes feet high'},
@@ -488,6 +499,21 @@ function targets(wo,p1Up){
     `<div class="tm-tile">${fig(m)}<div><b>${MUS[m]}</b><span>${Math.round(n/tot*20)*5}%</span></div></div>`).join('')}</div></div>`;
 }
 
+// botón knee friendly solo en días de piernas y full body
+function kneeBox(s,wo){
+  if(s.slot!=='lower'&&s.slot!=='full') return '';
+  const n=wo.sets.reduce((a,st)=>a+st.x.filter(it=>X[it.id].k).length,0);
+  const msg=knee
+    ? (n?`Cambié ${n} ejercicio${n>1?'s':''} por versiones que no cargan la rodilla. Los cambiados dicen "cambio por rodilla".`:'Hoy no hay nada que cambiar: todo es amable con la rodilla.')
+    : 'Si te duele la rodilla hoy, prende esto y cambio lunges, saltos y sentadillas por ejercicios de cadera.';
+  return `<div class="kneebox${knee?' on':''}"><button type="button" class="kneebtn" aria-pressed="${knee}"><span class="kb-dot"></span>Knee friendly ${knee?'ON':'OFF'}</button><p>${msg}</p></div>`;
+}
+function setKnee(v){
+  knee=v; kneeEl.checked=v;
+  try{localStorage.setItem('lea-knee',v?'1':'0')}catch(_){}
+  renderWorkout();
+}
+
 function renderWorkout(){
   const {w,d}=sel; const s=session(w,d); sel.ph=s.ph;
   const el=document.getElementById('workout');
@@ -519,7 +545,8 @@ function renderWorkout(){
   }).join('');
   el.innerHTML=`<div class="wk-head"><div class="eyebrow">${when}</div><h2 class="wk-title">${esc(wo.t)}</h2>
     <div class="wk-meta"><span class="chip t">${ty.lab}</span><span class="chip">${PHASES[s.ph].n}</span>${s.slot==='core'?'<span class="chip">opcional</span>':''}<span class="chip">Descanso 45–60 seg por ronda</span></div>
-    ${prog?`<div class="prog-note">${prog}</div>`:''}</div>
+    ${prog?`<div class="prog-note">${prog}</div>`:''}
+    ${kneeBox(s,wo)}</div>
   <div class="wk-body">
     ${targets(wo,p1Up)}
     <div class="blk warm"><div class="blk-h"><h3>Warm up</h3></div><ul>${wo.warm.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
@@ -527,6 +554,7 @@ function renderWorkout(){
     <div class="blk"><div class="blk-h"><h3>Stretch</h3></div><p class="blk-note">5 min estirando lo que trabajaste.</p></div>
   </div>
   <div class="log" id="logbox"></div>`;
+  const kb=el.querySelector('.kneebtn'); if(kb) kb.onclick=()=>setKnee(!knee);
   renderLog();
 }
 
